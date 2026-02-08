@@ -10,11 +10,11 @@ description: >
 author: faronov
 
 component:
-  # Core Stack Components
-  - id: zigbee_pro_stack
+  # Core Stack Components - SED uses LEAF STACK
+  - id: zigbee_pro_leaf_stack
+  - id: zigbee_end_device_support
   - id: zigbee_zcl_framework_core
   - id: zigbee_debug_print
-  - id: zigbee_source_route
   - id: zigbee_stack_diagnostics
   - id: zigbee_counters
 
@@ -24,7 +24,7 @@ component:
   - id: zigbee_update_tc_link_key
   - id: zigbee_find_and_bind_target
 
-  # ZCL Clusters - Server Side
+  # ZCL Clusters - Server Side (we provide sensor data)
   - id: zigbee_basic
   - id: zigbee_identify
   - id: zigbee_reporting
@@ -58,17 +58,17 @@ configuration:
   - name: SL_CLI_PROMPT_STRING
     value: '"EFR32MG1-SED>"'
 
-  # Zigbee Device Configuration - SLEEPY END DEVICE
+  # Zigbee Device Configuration - END DEVICE (sleepy)
   - name: SLI_ZIGBEE_PRIMARY_NETWORK_DEVICE_TYPE
-    value: SLI_ZIGBEE_NETWORK_DEVICE_TYPE_SLEEPY_END_DEVICE
+    value: SLI_ZIGBEE_NETWORK_DEVICE_TYPE_END_DEVICE
   - name: SLI_ZIGBEE_PRIMARY_NETWORK_SECURITY_TYPE
     value: SLI_ZIGBEE_NETWORK_SECURITY_TYPE_3_0
 
-  # Sleepy End Device Timing
-  - name: EMBER_END_DEVICE_POLL_TIMEOUT
-    value: 8
-  - name: EMBER_INDIRECT_TRANSMISSION_TIMEOUT
-    value: 7680
+  # Sleepy End Device - Allow deep sleep
+  - name: SL_IOSTREAM_USART_VCOM_RESTRICT_ENERGY_MODE_TO_ALLOW_RECEPTION
+    value: 0
+    condition:
+      - iostream_usart
 
   # NVM3 Storage
   - name: NVM3_DEFAULT_NVM_SIZE
@@ -85,22 +85,11 @@ configuration:
     value: 1
 
   # Stack Sizing
-  - name: EMBER_AF_PLUGIN_ZIGBEE_EVENT_LOGGER_ENABLE
-    value: 1
   - name: EMBER_BINDING_TABLE_SIZE
     value: 10
-  - name: EMBER_MAX_END_DEVICE_CHILDREN
-    value: 0
-  - name: EMBER_PACKET_BUFFER_COUNT
-    value: 75
 
 # Device Configuration
 device: EFR32MG1P132F256GM32
-
-# Toolchain
-toolchain_settings:
-  - option: gcc_compiler_option
-    value: "-Wall -Wextra"
 
 # Source Files
 source:
@@ -121,7 +110,8 @@ include:
 
 # ZCL Configuration
 config_file:
-  - path: zcl_config.zap
+  - path: config/zcl/zcl_config.zap
+    file_id: zap_configuration_file_id
     directory: zcl
 
 # Other Files
@@ -141,3 +131,11 @@ tag:
   - hardware:device:flash:256
   - hardware:device:ram:32
   - hardware:rf:band:2400
+
+filter:
+  - name: Wireless Technology
+    value: [Zigbee]
+  - name: Device Type
+    value: [SoC]
+  - name: Project Difficulty
+    value: [Advanced]

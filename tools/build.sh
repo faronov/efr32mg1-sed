@@ -84,15 +84,18 @@ echo ""
 echo "Cleaning previous build..."
 rm -rf autogen/ "$BUILD_DIR/" *.Makefile
 
+# Create required directories
+mkdir -p config/zcl
+
 # Generate project files using SLC
 echo ""
 echo "Generating project files with SLC..."
 "$SLC_CMD" generate \
     -p "$SLCP_FILE" \
-    --with arm-gcc \
-    --output-type makefile \
-    --copy-sources \
-    --sdk-package-path "$GSDK_DIR"
+    -tlcn=arm-gcc \
+    -o=makefile \
+    -cp \
+    -s="$GSDK_DIR"
 
 if [ $? -ne 0 ]; then
     echo "ERROR: SLC project generation failed"
