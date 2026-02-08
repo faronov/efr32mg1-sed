@@ -1,0 +1,59 @@
+# Build artifacts
+build/
+*.o
+*.d
+*.axf
+*.elf
+*.hex
+*.bin
+*.s37
+*.map
+*.lst
+*.out
+
+# Generated files
+autogen/
+*.Makefile
+*.slsproj
+*.slpb
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Logs
+*.log
+swo.log
+
+# Simplicity Studio
+SimplicityStudio/
+.cproject
+.project
+.settings/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.cache
+
+# Docker
+.dockerignore
+
+# OS-specific
+Thumbs.db
+Desktop.ini
