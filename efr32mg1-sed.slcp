@@ -1,36 +1,22 @@
-# Silicon Labs Project Configuration Tools: slcp, v0, Component selection file.
 project_name: efr32mg1-sed
-label: EFR32MG1 Zigbee Sleepy End Device with SHT31 Sensor
+label: EFR32MG1 Zigbee SED with SHT31
+package: Zigbee
+category: Zigbee Application
+quality: production
 description: >
   Production-quality Zigbee 3.0 Sleepy End Device firmware for EFR32MG1
   with SHT31 temperature/humidity sensor support. Features stable ZHA/Zigbee2MQTT
   behavior, battery monitoring, button control, and configurable reporting.
-category: Zigbee Application
-quality: production
-
-filter:
-  - name: Device Type
-    value: [SoC]
-  - name: MCU
-    value: [32-bit MCU]
-  - name: Project Difficulty
-    value: [Advanced]
-  - name: Wireless Technology
-    value: [Zigbee]
-
-package: Zigbee
-sdk:
-  id: gecko_sdk
-  version: 4.5.0
+author: faronov
 
 component:
-  # Zigbee Stack - Sleepy End Device
-  - id: zigbee_stack_common
+  # Core Stack Components
   - id: zigbee_pro_stack
   - id: zigbee_zcl_framework_core
-  - id: zigbee_app_framework_common
-  - id: zigbee_sleep
-  - id: zigbee_end_device_support
+  - id: zigbee_debug_print
+  - id: zigbee_source_route
+  - id: zigbee_stack_diagnostics
+  - id: zigbee_counters
 
   # Network Management
   - id: zigbee_network_steering
@@ -41,109 +27,82 @@ component:
   # ZCL Clusters - Server Side
   - id: zigbee_basic
   - id: zigbee_identify
-  - id: zigbee_power_config
-  - id: zigbee_temperature_measurement
-  - id: zigbee_relative_humidity_measurement
   - id: zigbee_reporting
 
-  # NVM and Storage
-  - id: zigbee_nvm3
-  - id: nvm3_default
-  - id: nvm3_lib
-
-  # Device Configuration
-  - id: zigbee_device_config
-  - id: zigbee_gp
-  - id: zigbee_zll
-  - id: zigbee_install_code
-
-  # Hardware Abstraction
-  - id: device_init
-  - id: emlib_gpio
-  - id: emlib_cmu
-  - id: emlib_i2c
-  - id: emlib_adc
-  - id: emlib_emu
-  - id: gpiointerrupt
-
-  # Simple drivers
+  # Hardware Components
   - id: simple_button
     instance: [btn0]
   - id: simple_led
     instance: [led0]
 
-  # Sleep and Power Management
-  - id: power_manager
-  - id: sleeptimer
-
-  # Debugging
-  - id: zigbee_debug_print
-  - id: legacy_printf
-  - id: iostream_recommended_stream
-  - id: iostream_retarget_stdio
+  # CLI and Debugging
   - id: cli
     instance: [example]
-  - id: zigbee_pro_stack_rail_mux
+  - id: iostream_recommended_stream
+  - id: zigbee_core_cli
+  - id: zigbee_zcl_cli
 
-  # Security
-  - id: zigbee_security_link_keys
-  - id: zigbee_mfglib
+  # Application Bootloader (optional for OTA)
+  - id: zigbee_application_bootloader
 
-  # Miscellaneous
-  - id: zigbee_packet_validate
-  - id: zigbee_counters
-  - id: zigbee_stack_diagnostics
-  - id: zigbee_source_route
+configuration:
+  # Serial Console
+  - name: SL_BOARD_ENABLE_VCOM
+    value: 1
+  - name: SL_IOSTREAM_USART_VCOM_FLOW_CONTROL_TYPE
+    value: usartHwFlowControlNone
+    condition:
+      - iostream_usart
+  - name: SL_CLI_MAX_INPUT_ARGUMENTS
+    value: 16
+  - name: SL_CLI_PROMPT_STRING
+    value: '"EFR32MG1-SED>"'
+
+  # Zigbee Device Configuration - SLEEPY END DEVICE
+  - name: SLI_ZIGBEE_PRIMARY_NETWORK_DEVICE_TYPE
+    value: SLI_ZIGBEE_NETWORK_DEVICE_TYPE_SLEEPY_END_DEVICE
+  - name: SLI_ZIGBEE_PRIMARY_NETWORK_SECURITY_TYPE
+    value: SLI_ZIGBEE_NETWORK_SECURITY_TYPE_3_0
+
+  # Sleepy End Device Timing
+  - name: EMBER_END_DEVICE_POLL_TIMEOUT
+    value: 8
+  - name: EMBER_INDIRECT_TRANSMISSION_TIMEOUT
+    value: 7680
+
+  # NVM3 Storage
+  - name: NVM3_DEFAULT_NVM_SIZE
+    value: 36864
+    condition:
+      - device_series_1
+
+  # PSA Key Storage
+  - name: SL_PSA_ITS_SUPPORT_V1_DRIVER
+    value: 0
+  - name: SL_PSA_ITS_SUPPORT_V2_DRIVER
+    value: 0
+  - name: SL_PSA_ITS_SUPPORT_V3_DRIVER
+    value: 1
+
+  # Stack Sizing
+  - name: EMBER_AF_PLUGIN_ZIGBEE_EVENT_LOGGER_ENABLE
+    value: 1
+  - name: EMBER_BINDING_TABLE_SIZE
+    value: 10
+  - name: EMBER_MAX_END_DEVICE_CHILDREN
+    value: 0
+  - name: EMBER_PACKET_BUFFER_COUNT
+    value: 75
 
 # Device Configuration
 device: EFR32MG1P132F256GM32
 
 # Toolchain
 toolchain_settings:
-  - option: gcc_linker_option
-    value: -Wl,--no-warn-rwx-segments
+  - option: gcc_compiler_option
+    value: "-Wall -Wextra"
 
-# Configuration
-configuration:
-  - name: SL_BOARD_ENABLE_VCOM
-    value: "1"
-  - name: SL_IOSTREAM_USART_VCOM_FLOW_CONTROL_TYPE
-    value: usartHwFlowControlNone
-  - name: SL_CLI_MAX_INPUT_ARGUMENTS
-    value: "16"
-  - name: SLI_ZIGBEE_PRIMARY_NETWORK_DEVICE_TYPE
-    value: SLI_ZIGBEE_NETWORK_DEVICE_TYPE_SLEEPY_END_DEVICE
-  - name: SLI_ZIGBEE_PRIMARY_NETWORK_SECURITY_TYPE
-    value: SLI_ZIGBEE_NETWORK_SECURITY_TYPE_3_0
-  - name: EMBER_AF_PLUGIN_ZIGBEE_EVENT_LOGGER_ENABLE
-    value: "1"
-  - name: EMBER_BINDING_TABLE_SIZE
-    value: "10"
-  - name: EMBER_MAX_END_DEVICE_CHILDREN
-    value: "0"
-  - name: EMBER_PACKET_BUFFER_COUNT
-    value: "75"
-  - name: EMBER_AF_PLUGIN_NETWORK_STEERING_OPTIMIZE_SCANS
-    value: "1"
-  # SED Timing Configuration
-  - name: EMBER_END_DEVICE_POLL_TIMEOUT
-    value: "8"
-  - name: EMBER_INDIRECT_TRANSMISSION_TIMEOUT
-    value: "7680"
-  # Button Configuration
-  - name: SL_SIMPLE_BUTTON_BTN0_MODE
-    value: SL_SIMPLE_BUTTON_MODE_INTERRUPT
-  # Power Manager
-  - name: SL_POWER_MANAGER_LOWEST_EM_ALLOWED
-    value: "2"
-
-# UI Hints
-ui_hints:
-  highlight:
-    - path: readme.md
-      focus: true
-
-# Source files
+# Source Files
 source:
   - path: src/app.c
   - path: src/zcl_callbacks.c
@@ -151,7 +110,7 @@ source:
   - path: src/sht31.c
   - path: src/battery.c
 
-# Include paths
+# Include Paths
 include:
   - path: src
     file_list:
@@ -160,34 +119,20 @@ include:
       - path: sht31.h
       - path: battery.h
 
-# Other files
+# ZCL Configuration
+config_file:
+  - path: zcl_config.zap
+    directory: zcl
+
+# Other Files
 other_file:
   - path: README.md
-  - path: BUILDING.md
-  - path: FLASHING.md
 
-# Define
-define:
-  - name: DEBUG_LEVEL
-    value: FULL
-
-# Template contribution
-template_contribution:
-  - name: cli_command
-    value:
-      name: sensor_read
-      handler: cli_sensor_read
-      help: "Trigger immediate sensor reading"
-  - name: cli_command
-    value:
-      name: battery_read
-      handler: cli_battery_read
-      help: "Read battery voltage"
-  - name: cli_command
-    value:
-      name: network_status
-      handler: cli_network_status
-      help: "Display network status"
+# UI Hints
+ui_hints:
+  highlight:
+    - path: README.md
+      focus: true
 
 readme:
   - path: README.md
