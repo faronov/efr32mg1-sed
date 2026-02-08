@@ -97,7 +97,7 @@ echo ""
 echo "Generating project files with SLC..."
 "$SLC_CMD" generate \
     -p "$SLCP_FILE" \
-    -tlcn=arm-gcc \
+    -tlcn=gcc \
     -o=makefile \
     -cp \
     -s="$GSDK_DIR"

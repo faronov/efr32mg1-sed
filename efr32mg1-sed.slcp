@@ -109,10 +109,10 @@ include:
       - path: battery.h
 
 # ZCL Configuration
-config_file:
-  - path: config/zcl/zcl_config.zap
-    file_id: zap_configuration_file_id
-    directory: zcl
+# config_file:
+#   - path: config/zcl/zcl_config.zap
+#     file_id: zap_configuration_file_id
+#     directory: zcl
 
 # Other Files
 other_file:
