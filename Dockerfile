@@ -1,78 +1,71 @@
-FROM ubuntu:22.04
+# Dockerfile for building EFR32MG1 Zigbee SED with SHT31 sensor
+# Based on NabuCasa/silabs-firmware-builder approach
+FROM debian:trixie-slim
 
-# Avoid interactive prompts during build
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV HOME=/root
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Set versions
-ENV GECKO_SDK_VERSION=v4.5.0
-ENV ARM_TOOLCHAIN_VERSION=12.2.rel1
-ENV SLC_VERSION=2024.6.0
-
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    curl \
+# Install base dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    aria2 \
+    ca-certificates \
     git \
-    python3 \
-    python3-pip \
-    python3-venv \
-    default-jre \
-    openjdk-11-jdk \
-    unzip \
-    xz-utils \
-    make \
-    cmake \
-    ninja-build \
+    libarchive-tools \
     bzip2 \
-    libncurses5 \
-    libpython2.7 \
+    unzip \
+    jq \
+    make \
+    libstdc++6 \
+    libgl1 \
+    libpng16-16 \
+    libpcre2-16-0 \
+    libglib2.0-0 \
+    openjdk-21-jre-headless \
+    ripgrep \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ARM GCC toolchain
-WORKDIR /opt
-RUN wget -q https://developer.arm.com/-/media/Files/downloads/gnu/${ARM_TOOLCHAIN_VERSION}/binrel/arm-gnu-toolchain-${ARM_TOOLCHAIN_VERSION}-x86_64-arm-none-eabi.tar.xz && \
-    tar xf arm-gnu-toolchain-${ARM_TOOLCHAIN_VERSION}-x86_64-arm-none-eabi.tar.xz && \
-    rm arm-gnu-toolchain-${ARM_TOOLCHAIN_VERSION}-x86_64-arm-none-eabi.tar.xz && \
-    ln -s arm-gnu-toolchain-${ARM_TOOLCHAIN_VERSION}-x86_64-arm-none-eabi arm-gcc
+# Install slt (Silicon Labs Tooling) CLI
+RUN aria2c --checksum=sha-256=8c2dd5091c15d5dd7b8fc978a512c49d9b9c5da83d4d0b820cfe983b38ef3612 -o slt.zip \
+        https://www.silabs.com/documents/public/software/slt-cli-1.1.0-linux-x64.zip \
+    && bsdtar -xf slt.zip -C /usr/bin && rm slt.zip \
+    && chmod +x /usr/bin/slt \
+    && slt --non-interactive install conan
 
-ENV PATH="/opt/arm-gcc/bin:${PATH}"
+# Install Silicon Labs toolchain and SDK via slt
+RUN slt --non-interactive install \
+        cmake/3.30.2 \
+        ninja/1.12.1 \
+        commander/1.22.0 \
+        slc-cli/6.0.15 \
+        simplicity-sdk/2025.6.2 \
+    # Create stable symlinks
+    && mkdir -p /root/.silabs/slt/bin \
+    && ln -s "$(slt where commander)/commander" /root/.silabs/slt/bin/commander \
+    && ln -s "$(slt where cmake)/bin/cmake" /root/.silabs/slt/bin/cmake \
+    && ln -s "$(slt where ninja)/ninja" /root/.silabs/slt/bin/ninja \
+    && printf '#!/bin/sh\nexec "%s/slc" "$@"\n' "$(slt where slc-cli)" > /root/.silabs/slt/bin/slc \
+    && chmod +x /root/.silabs/slt/bin/slc \
+    # Clean up caches
+    && rm -rf /root/.silabs/slt/installs/archive/*.zip \
+              /root/.silabs/slt/installs/archive/*.tar.* \
+              /root/.silabs/slt/installs/conan/p/*/d/
 
-# Clone Gecko SDK from GitHub
-WORKDIR /opt
-RUN git clone --depth 1 --branch ${GECKO_SDK_VERSION} https://github.com/SiliconLabs/gecko_sdk.git
+# Download Gecko SDK 4.5.0 (for Series 1 support - EFR32MG1)
+RUN aria2c --checksum=sha-256=b5b2b2410eac0c9e2a72320f46605ecac0d376910cafded5daca9c1f78e966c8 -o sdk.zip \
+        https://github.com/SiliconLabs/gecko_sdk/releases/download/v4.5.0/gecko-sdk.zip \
+    && mkdir /gecko_sdk_4.5.0 && bsdtar -xf sdk.zip -C /gecko_sdk_4.5.0 \
+    && rm sdk.zip
 
-ENV GECKO_SDK_PATH=/opt/gecko_sdk
+# Add Silicon Labs tools to PATH
+# Note: GCC ARM toolchain path is set at runtime in the workflow
+ENV PATH="/root/.silabs/slt/bin:$PATH"
 
-# Download and install SLC CLI
-WORKDIR /opt
-RUN wget -q https://www.silabs.com/documents/login/software/slc_cli_linux.zip && \
-    unzip -q slc_cli_linux.zip -d slc_cli && \
-    rm slc_cli_linux.zip && \
-    chmod +x slc_cli/slc
+# Verify GCC toolchain was installed
+RUN GCC_BIN=$(find /root/.silabs/slt/installs/conan/p -type d -name "gcc-*" -path "*/p/bin" 2>/dev/null | head -1) \
+    && if [ -z "$GCC_BIN" ]; then echo "WARNING: GCC not found during build"; else echo "GCC found at: $GCC_BIN"; fi
 
-ENV PATH="/opt/slc_cli:${PATH}"
-
-# Configure SLC with Gecko SDK path
-RUN slc configuration --sdk ${GECKO_SDK_PATH}
-
-# Install Python dependencies for build scripts
-RUN pip3 install --no-cache-dir \
-    pyserial \
-    pycryptodome \
-    intelhex
-
-# Set up workspace
 WORKDIR /workspace
 
-# Copy project files
-COPY . .
-
-# Create build output directory
-RUN mkdir -p build/debug build/release
-
-# Build script
-COPY docker-build.sh /usr/local/bin/build.sh
-RUN chmod +x /usr/local/bin/build.sh
-
-# Default command
-CMD ["/usr/local/bin/build.sh"]
+CMD ["/bin/bash"]

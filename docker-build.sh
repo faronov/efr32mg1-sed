@@ -15,6 +15,32 @@ if [ ! -f "${SLCP_FILE}" ]; then
     exit 1
 fi
 
+# Check if SLC is available
+if ! command -v slc &> /dev/null; then
+    echo "=========================================="
+    echo "  SLC CLI NOT AVAILABLE"
+    echo "=========================================="
+    echo ""
+    echo "SLC CLI is required to generate build files but is not available."
+    echo ""
+    echo "REASON: SLC CLI requires authentication to download from Silicon Labs."
+    echo ""
+    echo "SOLUTIONS:"
+    echo "  1. Download SLC CLI manually from:"
+    echo "     https://www.silabs.com/developers/simplicity-studio"
+    echo "     Then mount it into the Docker container"
+    echo ""
+    echo "  2. Use Simplicity Studio locally to generate project files"
+    echo ""
+    echo "  3. Use an official Silicon Labs Docker image (if available)"
+    echo ""
+    echo "For demonstration, creating stub build output..."
+    mkdir -p build/debug build/release
+    echo "Stub build - SLC CLI required for actual compilation" > build/debug/README.txt
+    echo "Stub build - SLC CLI required for actual compilation" > build/release/README.txt
+    exit 1
+fi
+
 # Generate project files using SLC
 echo ""
 echo "Generating project files with SLC..."
