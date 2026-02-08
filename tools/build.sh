@@ -71,6 +71,11 @@ if [ -z "$SLC_CMD" ] || [ ! -x "$SLC_CMD" ]; then
 fi
 
 echo "✓ SLC: $SLC_CMD"
+
+# Trust the SDK (required for SLC to use it)
+echo "Trusting Gecko SDK..."
+"$SLC_CMD" signature trust --sdk "$GSDK_DIR" || true
+
 echo "✓ Building project: $SLCP_FILE"
 
 # Check if project file exists
