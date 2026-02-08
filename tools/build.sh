@@ -91,7 +91,8 @@ echo "Generating project files with SLC..."
     -p "$SLCP_FILE" \
     --with arm-gcc \
     --output-type makefile \
-    --copy-sources
+    --copy-sources \
+    --sdk-package-path "$GSDK_DIR"
 
 if [ $? -ne 0 ]; then
     echo "ERROR: SLC project generation failed"
