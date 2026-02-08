@@ -91,8 +91,7 @@ echo "Generating project files with SLC..."
     -p "$SLCP_FILE" \
     --with arm-gcc \
     --output-type makefile \
-    --copy-sources \
-    --project-file "${PROJECT_NAME}.Makefile"
+    --copy-sources
 
 if [ $? -ne 0 ]; then
     echo "ERROR: SLC project generation failed"
